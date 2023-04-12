@@ -3,30 +3,32 @@
 PB20000215 丁程
 
 **1、三级模式结构在SQL中分别对应什么对象？三级模式结构在SQL中分别通过哪些DDL语句进行操纵？**
-三级模式结构在数据库中通常指的是 ANSI/SPARC 三级模式架构，该架构把数据库管理系统划分为三个层次：外模式（用户视图）、概念模式（全局视图）和内模式（物理存储）。在 SQL 中，这三个层次分别对应以下对象：
 
-外模式（用户视图）：这一层对应 SQL 中的视图（View）。视图是基于一张或多张基本表的虚拟表，它提供了一种自定义的数据查询和表示方式，使用户可以更加简便地访问底层数据。
 
-概念模式（全局视图）：这一层对应 SQL 中的表（Table）。表是存储数据的基本结构，由行（记录）和列（字段）组成。概念模式描述了数据库中所有实体及其相互之间的关系。
+外模式：对应 SQL 中的视图。
 
-内模式（物理存储）：这一层对应 SQL 中的存储结构和索引等。它主要描述了数据在数据库中的物理存储方式，例如存储空间、文件组织方式等。在 SQL 中，这层次的概念通常不直接暴露给开发者。
+概念模式：这一层对应 SQL 中的基本表。
+
+内模式：这一层对应 SQL 中的文件和索引等存储方式。
 
 在 SQL 中，可以使用以下 DDL（数据定义语言）语句来操作这三级模式结构：
 
-外模式（用户视图）：
-
-创建视图：CREATE VIEW view_name AS SELECT ...
-修改视图：ALTER VIEW view_name ...
-删除视图：DROP VIEW view_name
-概念模式（全局视图）：
-
-创建表：CREATE TABLE table_name (column1 datatype, column2 datatype, ...)
-修改表：ALTER TABLE table_name ...
-删除表：DROP TABLE table_name
-内模式（物理存储）：
-
-在 SQL 中，内模式的操作通常是由 DBMS 自动处理的，因此，开发者不需要直接操纵内模式。但是，开发者可以通过优化 SQL 语句、创建和调整索引等方式，间接地影响内模式的物理存储结构。
-
+外模式：
+```
+创建视图：CREATE VIEW
+删除视图：DROP VIEW
+```
+概念模式：
+```
+创建表：CREATE TABLE
+修改表：ALTER TABLE
+删除表：DROP TABLE
+```
+内模式：
+```
+创建索引：CREATE INDEX
+删除索引：DROP INDEX
+```
 **2.(1)请写出定义上述三个表的 create table 语句**
 ```sql
 CREATE TABLE Student (
@@ -47,7 +49,7 @@ CREATE TABLE SC (
     sno CHAR(10),
     cno CHAR(10),
     score FLOAT CHECK (score >= 0 AND score <= 100),
-    term INT CHECK (term BETWEEN 1 AND 8),
+    term INT CHECK (term >= 1 AND term <= 8),
     PRIMARY KEY (sno, cno),
     FOREIGN KEY (sno) REFERENCES Student(sno),
     FOREIGN KEY (cno) REFERENCES Course(cno)
@@ -69,12 +71,13 @@ WHERE sname LIKE '李%';
 ```
 3）
 ```sql
-SELECT s.sno, s.sname
-FROM Student s
-JOIN SC sc ON s.sno = sc.sno
-JOIN Course c ON sc.cno = c.cno
-WHERE c.type = 0 AND sc.score IS NULL
-ORDER BY s.sno;
+SELECT Student.sno, Student.sname
+FROM Student, Course, SC
+WHERE Student.sno = SC.sno
+	AND Course.cno = SC.cno
+	AND Course.type = 0
+	AND SC.score IS NULL
+ORDER BY Student.sno;
 ```
 4）
 ```sql
@@ -88,15 +91,14 @@ HAVING SUM(c.credit) > 16 AND AVG(sc.score) >= 75;
 ```
 5）
 ```sql
-SELECT s.sno, s.sname
-FROM Student s
-WHERE NOT EXISTS (
-    SELECT 1
-    FROM Course c
-    WHERE c.type = 2 AND NOT EXISTS (
-        SELECT 1
-        FROM SC sc
-        WHERE sc.sno = s.sno AND sc.cno = c.cno AND sc.score >= 60
+SELECT sno, sname 
+FROM Student
+WHERE NOT EXISTS(
+    SELECT * FROM Course WHERE TYPE = 2 AND NOT EXISTS(
+        SELECT * FROM SC 
+        WHERE sno = Student.sno 
+        AND cno = Course.cno
+        AND score >= 60
     )
 );
 ```
