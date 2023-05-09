@@ -18,5 +18,10 @@ BEGIN
     UPDATE Book
     set reserve_Times = reserve_Times - 1
     where ID = old.book_ID;
+    IF NOT EXISTS(
+        SELECT * FROM Reserve WHERE book_id = OLD.book_id
+    ) THEN
+        UPDATE Book SET status = 0 WHERE id = OLD.book_id;
+    END IF;
 END //
 DELIMITER ;

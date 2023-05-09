@@ -1,2 +1,2 @@
-call returnBook('r21', 'b10', @return_info);
-select @return_info;
+call returnBook('r19', 'b13', @return_info);
+select * FROM Book;

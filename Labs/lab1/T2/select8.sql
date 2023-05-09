@@ -5,6 +5,7 @@
 */
 select reader_ID, COUNT(reader_ID)
 from borrow_info
-where DATEDIFF(borrow_Date, NOW()) < 365
+where DATEDIFF(CURDATE(), borrow_Date) <= 365
 group by reader_ID
 order by COUNT(reader_ID) desc
+

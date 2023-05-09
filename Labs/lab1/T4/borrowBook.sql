@@ -58,25 +58,18 @@ set foreign_key_checks = 1;
         CASE s
             WHEN 1 THEN
                 SET return_info = 'no such table';
-                COMMIT;
             WHEN 2 THEN
                 SET return_info = 'no such table';
-                COMMIT;
             WHEN 3 THEN
                 SET return_info = 'not found';
-                COMMIT;
             WHEN 4 THEN
                 SET return_info = 'sql exception';
-                COMMIT;
             WHEN 5 THEN
                 SET return_info = 'duplicate borrow';
-                COMMIT;
             WHEN 6 THEN
                 SET return_info = 'reserved by others';
-                COMMIT;
             WHEN 7 THEN
                 SET return_info = 'max borrow nums';
-                COMMIT;
 
         END CASE;
         ROLLBACK;

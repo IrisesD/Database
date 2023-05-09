@@ -12,5 +12,5 @@
     call borrowBook('r21', 'b10', @return_info);
     select @return_info;
  */
-call borrowBook('r21', 'b10', @return_info);
+call borrowBook('r23', 'b6', @return_info);
 select @return_info;

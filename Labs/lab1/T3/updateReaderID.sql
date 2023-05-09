@@ -14,18 +14,25 @@ BEGIN
 
     -- TODO:UpdateReaderID
 set foreign_key_checks = 0;
+    IF oldID not in (SELECT ID from Reader) THEN
+        set s = 3;
+    
+    else IF newID in (SELECT ID from Reader) THEN
+        set s = 5;
 
-    Update Reader
-    set ID = newID
-    where ID = oldID;
+    else
+        Update Reader
+        set ID = newID
+        where ID = oldID;
 
-    Update Borrow
-    set reader_ID = newID
-    where reader_ID = oldID;
+        Update Borrow
+        set reader_ID = newID
+        where reader_ID = oldID;
 
-    Update Reserve
-    set reader_ID = newID
-    where reader_ID = oldID;
+        Update Reserve
+        set reader_ID = newID
+        where reader_ID = oldID;
+    end if;
 
 set foreign_key_checks = 1;
 
@@ -36,16 +43,14 @@ set foreign_key_checks = 1;
         CASE s
             WHEN 1 THEN
                 SET return_info = 'no such table';
-                COMMIT;
             WHEN 2 THEN
                 SET return_info = 'no such table';
-                COMMIT;
             WHEN 3 THEN
                 SET return_info = 'not found';
-                COMMIT;
             WHEN 4 THEN
                 SET return_info = 'sql exception';
-                COMMIT;
+            WHEN 5 THEN
+                SET return_info = 'duplicate ID';
         END CASE;
         ROLLBACK;
     END IF;

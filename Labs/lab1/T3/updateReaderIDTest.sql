@@ -1,2 +1,2 @@
-call updateReaderID('r99', 'r9', @return_info);
-select @return_info;
+call updateReaderID('r9', 'r99', @return_info);
+select * FROM Borrow;

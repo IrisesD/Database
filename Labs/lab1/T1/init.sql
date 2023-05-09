@@ -1,12 +1,12 @@
--- Q1
-create database if not exists lab1;
+DROP DATABASE if exists lab1;
+create database lab1;
 use lab1;
-
+/*
 drop table if exists Reserve;
 drop table if exists Borrow;
 drop table if exists Book;
 drop table if exists Reader;
-
+*/
 create table Book(
 	ID char(8),
     name varchar(10) not null,

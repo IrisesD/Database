@@ -22,7 +22,7 @@ set foreign_key_checks = 0;
         where ID = bookID;
     ELSE
         UPDATE Book
-        set status = 2
+        set status = 0
         where ID = bookID;
     end if;
 set foreign_key_checks = 1;
@@ -34,17 +34,12 @@ set foreign_key_checks = 1;
         CASE s
             WHEN 1 THEN
                 SET return_info = 'no such table';
-                COMMIT;
             WHEN 2 THEN
                 SET return_info = 'no such table';
-                COMMIT;
             WHEN 3 THEN
                 SET return_info = 'not found';
-                COMMIT;
             WHEN 4 THEN
                 SET return_info = 'sql exception';
-                COMMIT;
-
         END CASE;
         ROLLBACK;
     END IF;
