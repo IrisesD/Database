@@ -1,0 +1,31 @@
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js" integrity="sha384-/mhDoLbDldZc3qpsJHpLogda//BVZbgYuw6kof4u2FrCedxOtgRZDTHgHUhOCVim" crossorigin="anonymous"></script>        
+<form action="/paper/add/po", method='POST'>
+            <div class="mb-3">
+                <label for="exampleEmail1" class="form-label">Paper ID</label>
+                <input type="text" class="form-control" name="paper_id">
+              </div>
+              <div class="mb-3">
+                <label for="exampleEmail1" class="form-label">Paper Name</label>
+                <input type="text" class="form-control" name="paper_name">
+              </div>
+              <div class="mb-3">
+                <label for="exampleEmail1" class="form-label">Source</label>
+                <input type="text" class="form-control" name="source">
+              </div>
+              <div class="mb-3">
+                <label for="exampleEmail1" class="form-label">Date</label>
+                <input type="text" class="form-control" name="date">
+              </div>
+              <div class="mb-3">
+                <label for="exampleEmail1" class="form-label">Type</label>
+                <input type="text" class="form-control" name="ptype">
+              </div>
+              <div class="mb-3">
+                <label for="exampleEmail1" class="form-label">Level</label>
+                <input type="text" class="form-control" name="level">
+              </div>
+              <!--对多位作者的处理-->
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </form>
+        <a class="btn btn-primary" href="/course/show" role="button">返回上一页</a>
