@@ -1,4 +1,3 @@
-import re
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy, query
 from flask import render_template
@@ -176,104 +175,6 @@ class CourseTeach(db.Model):
     year = db.Column(db.Integer)
     term = db.Column(db.Integer)
     per_hours = db.Column(db.Integer)
-    
-with app.app_context():
-    db.drop_all()
-    db.create_all()
-
-    # 预先在表中插入一些数据
-    teacher1 = Teacher(id="00001", name="张三", gender=1, title=1)
-    teacher2 = Teacher(id="00002", name="李四", gender=2, title=2)
-    teacher3 = Teacher(id="00003", name="李五", gender=1, title=3)
-    db.session.add_all([teacher1, teacher2, teacher3])
-    
-    paper1 = Paper(id=1, name="论文1", source="来源1", date="2021-01-01", type=1, level=1)
-    paper2 = Paper(id=2, name="论文2", source="来源2", date="2021-01-02", type=2, level=2)
-    paper3 = Paper(id=3, name="论文3", source="来源3", date="2021-01-03", type=3, level=3)
-    db.session.add_all([paper1, paper2, paper3])
-    
-    project1 = Project(id="00001", name="项目1", source="来源1", type=1, fund=10000, begin_date="2021-01-01", end_date="2021-01-02")
-    project2 = Project(id="00002", name="项目2", source="来源2", type=2, fund=20000, begin_date="2021-01-02", end_date="2021-01-03")
-    project3 = Project(id="00003", name="项目3", source="来源3", type=3, fund=30000, begin_date="2021-01-03", end_date="2021-01-04")
-    db.session.add_all([project1, project2, project3])
-    
-    course1 = Course(id="00001", name="课程1", hours=20, property=1)
-    course2 = Course(id="00002", name="课程2", hours=60, property=2)
-    course3 = Course(id="00003", name="课程3", hours=100, property=3)
-    db.session.add_all([course1, course2, course3])
-    
-    paper_publish1 = PaperPublish(teacher_id="00001", paper_id=1, rank=1, corr=True)
-    paper_publish2 = PaperPublish(teacher_id="00001", paper_id=2, rank=2, corr=False)
-    paper_publish3 = PaperPublish(teacher_id="00002", paper_id=3, rank=3, corr=True)
-    paper_publish4 = PaperPublish(teacher_id="00002", paper_id=1, rank=2, corr=False)
-    paper_publish5 = PaperPublish(teacher_id="00003", paper_id=2, rank=3, corr=True)
-    db.session.add_all([paper_publish1, paper_publish2, paper_publish3, paper_publish4, paper_publish5])
-    
-    project_participate1 = ProjectParticipate(teacher_id="00001", project_id="00001", rank=1, per_fund=7000)
-    project_participate2 = ProjectParticipate(teacher_id="00001", project_id="00002", rank=2, per_fund=12000)
-    project_participate3 = ProjectParticipate(teacher_id="00002", project_id="00003", rank=3, per_fund=30000)
-    project_participate4 = ProjectParticipate(teacher_id="00002", project_id="00001", rank=2, per_fund=3000)
-    project_participate5 = ProjectParticipate(teacher_id="00003", project_id="00002", rank=3, per_fund=8000)
-    db.session.add_all([project_participate1, project_participate2, project_participate3, project_participate4, project_participate5])
-    
-    db.session.commit()
-
-# teacher 查询
-@app.route('/teacher', methods=['GET'])
-def get_all_teachers():
-    teachers = Teacher.query.all()
-    output = []
-    for teacher in teachers:
-        teacher_data = {}
-        teacher_data['id'] = teacher.id
-        teacher_data['name'] = teacher.name
-        teacher_data['gender'] = teacher.gender
-        teacher_data['title'] = teacher.title
-
-        output.append(teacher_data)
-
-    return jsonify({'teachers': output})
-
-# teacher 增加
-@app.route('/teacher', methods=['POST'])
-def add_teacher():
-    id = request.json['id']
-    name = request.json['name']
-    gender = request.json['gender']
-    title = request.json['title']
-
-    teacher = Teacher(id=id, name=name, gender=gender, title=title)
-
-    db.session.add(teacher)
-    db.session.commit()
-
-    return jsonify({'result': 'success'})
-    
-# teacher 删除
-@app.route('/teacher/<id>', methods=['DELETE'])
-def delete_teacher():
-    teacher = Teacher.query.get(id)
-    db.session.delete(teacher)
-    db.session.commit()
-
-    return jsonify({'result': 'success'})
-    
-# teacher 修改
-@app.route('/teacher', methods=['PUT'])
-def update_teacher():
-    teacher = Teacher.query.get(id)
-
-    name = request.json['name']
-    gender = request.json['gender']
-    title = request.json['title']
-
-    teacher.name = name
-    teacher.gender = gender
-    teacher.title = title
-
-    db.session.commit()
-
-    return jsonify({'result': 'success'})
     
 # paper 查询
 @app.route('/paper/query', methods=['POST'])
@@ -609,6 +510,10 @@ def update_course():
 @app.route('/comp_query', methods=['POST'])
 def comprehensive_query():
     id = request.form.get("id")
+    if len(id) != 5:
+        return render_template("query_fail.html", msg="教师id长度不为5")
+    if Teacher.query.get(id) is None:
+        return render_template("query_fail.html", msg="教师不存在")
     begin_date = request.form.get('begin_date')
     end_date = request.form.get('end_date')
     output = {}
@@ -720,20 +625,9 @@ def project_update_html():
     return render_template('project_update.html')
 
 @app.route('/')
-def test():
+def index_show():
     return render_template('index.html')
-
-@app.route('/', methods = ["GET","POST"])
-def ret():
-    if request.method == "POST":
-        id = request.form.get("id")
-        teacher = Teacher.query.get(id)
-        return teacher.name
-
 
 
 if __name__ == '__main__':
     app.run(debug=True)
-    
-
-
