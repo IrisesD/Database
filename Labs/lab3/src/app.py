@@ -216,12 +216,6 @@ with app.app_context():
     project_participate5 = ProjectParticipate(teacher_id="00003", project_id="00002", rank=3, per_fund=8000)
     db.session.add_all([project_participate1, project_participate2, project_participate3, project_participate4, project_participate5])
     
-    course_teach1 = CourseTeach(teacher_id="00001", course_id="00001", year=2020, term=1, per_hours=10)
-    course_teach2 = CourseTeach(teacher_id="00001", course_id="00002", year=2020, term=1, per_hours=20)
-    course_teach3 = CourseTeach(teacher_id="00002", course_id="00003", year=2020, term=1, per_hours=100)
-    course_teach4 = CourseTeach(teacher_id="00002", course_id="00001", year=2020, term=1, per_hours=10)
-    course_teach5 = CourseTeach(teacher_id="00003", course_id="00002", year=2020, term=1, per_hours=40)
-    db.session.add_all([course_teach1, course_teach2, course_teach3, course_teach4, course_teach5])
     db.session.commit()
 
 # teacher 查询
@@ -282,12 +276,13 @@ def update_teacher():
     return jsonify({'result': 'success'})
     
 # paper 查询
-@app.route('/paper', methods=['GET'])
+@app.route('/paper/query', methods=['POST'])
 def get_papers():
     id = request.form.get('id')
     res = {}
     papers = PaperPublish.query.filter(PaperPublish.teacher_id == id).all()
-    
+    if Teacher.query.get(id) is None:
+        return render_template("get_fail.html", msg = "教师不存在")
     paper_data = []
     for paper in papers:
         paper_id = paper.paper_id
@@ -296,68 +291,114 @@ def get_papers():
             
     res["papers"] = paper_data
     
-    return render_template("paper_query.html", papers=paper_transform(paper_data))
+    return render_template("paper_query.html", paper=paper_transform(res))
     
 # paper 增加
-@app.route('/paper', methods=['POST'])
+@app.route('/paper/add/po', methods=['POST'])
 def add_paper():
-    name = request.json['name']
-    source = request.json['source']
-    date = request.json['date']
-    ptype = request.json['type']
-    level = request.json['level']
+    id = request.form.get('paper_id')
+    name = request.form.get('paper_name')
+    source = request.form.get('source')
+    date = request.form.get('date')
+    ptype = request.form.get('ptype')
+    level = request.form.get('level')
 
-    paper = Paper(id, name, source, date, ptype, level)
+    paper = Paper(id=id, name=name, source=source, date=date, type=ptype, level=level)
     
     db.session.add(paper)
     db.session.commit()
     
-    teachers = request.json['teachers']
+    teachers = request.form.get('teachers')
+    corr = request.form.get('corre')
+    teachers = teachers.split(" ")
+    rank = 0
     for teacher in teachers:
-        teacher_id = teacher['id']
-        rank = teacher['rank']
-        corr = teacher['corr']
-        paper_publish = PaperPublish(teacher_id, id, rank, corr)
+        # 判断teacher是否已经存在Teacher表中
+        if len(teacher) != 5:
+            return render_template("add_fail.html", msg="教师id长度不为5")
+        if Teacher.query.get(teacher) is None:
+            return render_template("add_fail.html", msg="教师id不存在")
+        rank += 1
+        teacher_id = teacher
+        if teacher_id == corr:
+            corr = True
+        else:
+            corr = False
+        paper_publish = PaperPublish(teacher_id=teacher_id, paper_id=id, rank=rank, corr=corr)
         db.session.add(paper_publish)
         db.session.commit()
     
-    return jsonify({'result': 'success'})
+    return render_template("add_success.html")
     
 # paper 删除
-@app.route('/paper/<id>', methods=['DELETE'])
+@app.route('/paper/delete/po', methods=['POST'])
 def delete_paper():
-    paper = Paper.query.get(id)
-    db.session.delete(paper)
+    paper_id = request.form.get('paper_id')
+    if Paper.query.get(paper_id) is None:
+        return render_template("delete_fail.html", msg="论文不存在")
+    deletePaper = Paper.query.get(paper_id)
+    db.session.delete(deletePaper)
     db.session.commit()
-
-    return jsonify({'result': 'success'})
+    deletePaperPub = PaperPublish.query.filter(PaperPublish.paper_id == paper_id).all()
+    for paperPub in deletePaperPub:
+        db.session.delete(paperPub)
+        db.session.commit()
+    
+    return render_template("delete_success.html")
     
 # paper 修改
-@app.route('/paper', methods=['PUT'])
+@app.route('/paper/update/po', methods=['POST'])
 def update_paper():
-    paper = Paper.query.get(id)
+    id = request.form.get('paper_id')
+    if Paper.query.get(id) is None:
+        return render_template("update_fail.html", msg="论文不存在")
+    deletePaper = Paper.query.get(id)
+    db.session.delete(deletePaper)
+    deletePaperPub = PaperPublish.query.filter(PaperPublish.paper_id == id).all()
+    for paperPub in deletePaperPub:
+        db.session.delete(paperPub)
+        db.session.commit()
+    
+    name = request.form.get('paper_name')
+    source = request.form.get('source')
+    date = request.form.get('date')
+    ptype = request.form.get('ptype')
+    level = request.form.get('level')
 
-    name = request.json['name']
-    source = request.json['source']
-    date = request.json['date']
-    ptype = request.json['type']
-    level = request.json['level']
-
-    paper.name = name
-    paper.source = source
-    paper.date = date
-    paper.type = ptype
-    paper.level = level
-
+    paper = Paper(id=id, name=name, source=source, date=date, type=ptype, level=level)
+    
+    db.session.add(paper)
     db.session.commit()
     
-    return jsonify({'result': 'success'})
+    teachers = request.form.get('teachers')
+    corr = request.form.get('corre')
+    teachers = teachers.split(" ")
+    rank = 0
+    for teacher in teachers:
+        # 判断teacher是否已经存在Teacher表中
+        if len(teacher) != 5:
+            return render_template("update_fail.html", msg="教师id长度不为5")
+        if Teacher.query.get(teacher) is None:
+            return render_template("update_fail.html", msg="教师id不存在")
+        rank += 1
+        teacher_id = teacher
+        if teacher_id == corr:
+            corr = True
+        else:
+            corr = False
+        paper_publish = PaperPublish(teacher_id=teacher_id, paper_id=id, rank=rank, corr=corr)
+        db.session.add(paper_publish)
+        db.session.commit()
+    
+    return render_template("update_success.html")
         
 # project 查询
-@app.route('/project', methods=['GET'])
+@app.route('/project/query', methods=['POST'])
 def get_projects():
     id = request.form.get('id')
     res = {}
+    if Teacher.query.get(id) is None:
+        return render_template("get_fail.html", msg = "教师不存在")
     projects = ProjectParticipate.query.filter(ProjectParticipate.teacher_id == id and project_info.begin_date >= int(begin_date) and project_info.end_date <= int(end_date)).all()
     
     project_data = []
@@ -367,72 +408,114 @@ def get_projects():
         project_data.append({'id':project_info.id, 'name':project_info.name, 'source':project_info.source, 'type':project_info.type, 'total_fund':project_info.fund, 'begin':project_info.begin_date, 'end':project_info.end_date, 'teacher_rank':project.rank, 'per_fund':project.per_fund})
 
     res["projects"] = project_data
-    return render_template("project_query.html", project=project_transform(project_data))
+    return render_template("project_query.html", project=project_transform(res))
     
 # project 增加
-@app.route('/project', methods=['POST'])
+@app.route('/project/add/po', methods=['POST'])
 def add_project():
-    id = request.json['id']
-    name = request.json['name']
-    source = request.json['source']
-    ptype = request.json['type']
-    fund = request.json['fund']
-    begin_date = request.json['begin_date']
-    end_date = request.json['end_date']
+    id = request.form.get('project_id')
+    name = request.form.get('project_name')
+    source = request.form.get('source')
+    ptype = request.form.get('ptype')
+    begin_date = request.form.get('begin_date')
+    end_date = request.form.get('end_date')
+    total_fund = request.form.get('total_fund')
 
-    project = Project(id, name, source, ptype, fund, begin_date, end_date)
-
+    project = Project(id=id, name=name, source=source, type=ptype, fund=total_fund, begin_date=begin_date, end_date=end_date)
+    
     db.session.add(project)
     db.session.commit()
     
-    teachers = request.json['teachers']
+    teachers = request.form.get('teachers')
+    per_fund = request.form.get('per_fund')
+    teachers = teachers.split(" ")
+    per_fund = per_fund.split(" ")
+    per_fund = [float(i) for i in per_fund]
+    if (sum(per_fund) - float(total_fund)) > 0.0001:
+        return render_template("add_fail.html", msg="经费总数与分担经费之和不匹配")
+    if len(teachers) != len(per_fund):
+        return render_template("add_fail.html", msg="教师id与经费数目不匹配")
     for teacher in teachers:
-        teacher_id = teacher['id']
-        rank = teacher['rank']
-        per_fund = teacher['per_fund']
-        project_participate = ProjectParticipate(teacher_id, id, rank, per_fund)
-        db.session.add(project_participate)
+        # 判断teacher是否已经存在Teacher表中
+        if len(teacher) != 5:
+            return render_template("add_fail.html", msg="教师id长度不为5")
+        if Teacher.query.get(teacher) is None:
+            return render_template("add_fail.html", msg="教师id不存在")
+        teacher_id = teacher
+        project_par = ProjectParticipate(teacher_id=teacher_id, project_id=id, per_fund=per_fund[teachers.index(teacher)])
+        db.session.add(project_par)
         db.session.commit()
-
-    return jsonify({'result': 'success'})
+    
+    return render_template("add_success.html")
     
 # project 删除
-@app.route('/project/<id>', methods=['DELETE'])
+@app.route('/project/delete/po', methods=['POST'])
 def delete_project():
-    project = Project.query.get(id)
-    db.session.delete(project)
+    project_id = request.form.get('project_id')
+    if Project.query.get(project_id) is None:
+        return render_template("delete_fail.html", msg="项目不存在")
+    deleteProject = Project.query.get(project_id)
+    db.session.delete(deleteProject)
     db.session.commit()
-
-    return jsonify({'result': 'success'})
+    deleteProjectPar = ProjectParticipate.query.filter(ProjectParticipate.project_id == project_id).all()
+    for projectPar in deleteProjectPar:
+        db.session.delete(projectPar)
+        db.session.commit()
+    
+    return render_template("delete_success.html")
     
 # project 修改
-@app.route('/project', methods=['PUT'])
+@app.route('/project/update/po', methods=['POST'])
 def update_project():
-    project = Project.query.get(id)
-
-    name = request.json['name']
-    source = request.json['source']
-    type = request.json['type']
-    fund = request.json['fund']
-    begin_date = request.json['begin_date']
-    end_date = request.json['end_date']
-
-    project.name = name
-    project.source = source
-    project.type = type
-    project.fund = fund
-    project.begin_date = begin_date
-    project.end_date = end_date
-
+    id = request.form.get('project_id')
+    if Project.query.get(id) is None:
+        return render_template("update_fail.html", msg="项目不存在")
+    deleteProject = Project.query.get(id)
+    db.session.delete(deleteProject)
     db.session.commit()
+    deleteProjectPar = ProjectParticipate.query.filter(ProjectParticipate.project_id == id).all()
+    for projectPar in deleteProjectPar:
+        db.session.delete(projectPar)
+        db.session.commit()
+    
+    name = request.form.get('project_name')
+    source = request.form.get('source')
+    ptype = request.form.get('ptype')
+    begin_date = request.form.get('begin_date')
+    end_date = request.form.get('end_date')
+    total_fund = request.form.get('total_fund')
 
-    return jsonify({'result': 'success'})
+    project = Project(id=id, name=name, source=source, type=ptype, fund=total_fund, begin_date=begin_date, end_date=end_date)
+    
+    db.session.add(project)
+    db.session.commit()
+    
+    teachers = request.form.get('teachers')
+    per_fund = request.form.get('per_fund')
+    teachers = teachers.split(" ")
+    per_fund = per_fund.split(" ")
+    if len(teachers) != len(per_fund):
+        return render_template("add_fail.html", msg="教师id与经费数目不匹配")
+    for teacher in teachers:
+        # 判断teacher是否已经存在Teacher表中
+        if len(teacher) != 5:
+            return render_template("add_fail.html", msg="教师id长度不为5")
+        if Teacher.query.get(teacher) is None:
+            return render_template("add_fail.html", msg="教师id不存在")
+        teacher_id = teacher
+        project_par = ProjectParticipate(teacher_id=teacher_id, project_id=id, per_fund=per_fund[teachers.index(teacher)])
+        db.session.add(project_par)
+        db.session.commit()
+    
+    return render_template("add_success.html")
     
 # course 查询
 @app.route('/course/query', methods=['POST'])
 def get_courses():
     id = request.form.get('id')
     res = {}
+    if Teacher.query.get(id) is None:
+        return render_template("get_fail.html", msg = "教师不存在")
     courses = CourseTeach.query.filter(CourseTeach.teacher_id == id).all()
     
     course_data = []
@@ -445,54 +528,82 @@ def get_courses():
     return render_template('course_query.html', course=course_transform(res))
     
 # course 增加
-@app.route('/course', methods=['POST'])
+@app.route('/course/add/po', methods=['POST'])
 def add_course():
-    name = request.json['name']
-    hours = request.json['hours']
-    property = request.json['property']
+    course_id = request.form.get('course_id')
+    year = request.form.get('year')
+    term = request.form.get('term')
+    # 判断course是否已经存在Course表中
+    if Course.query.get(course_id) is None:
+        return render_template("add_fail.html", msg="课程不存在")
 
-    course = Course(name, hours, property)
-
-    db.session.add(course)
-    db.session.commit()
+    teachers = request.form.get('teachers')
+    per_hours = request.form.get('per_hours')
+    teachers = teachers.split(" ")
+    per_hours = per_hours.split(" ")
+    total_hours = Course.query.get(course_id).hours
+    per_hours = [int(i) for i in per_hours]
+    if sum(per_hours) != total_hours:
+        return render_template("add_fail.html", msg="总课时不等于教师课时之和")
+    if len(teachers) != len(per_hours):
+        return render_template("add_fail.html", msg="教师id与课时数目不匹配")
     
-    teachers = request.json['teachers']
     for teacher in teachers:
-        teacher_id = teacher['id']
-        year = teacher['year']
-        term = teacher['term']
-        per_hours = teacher['per_hours']
-        course_teach = CourseTeach(teacher_id, id, year, term, per_hours)
+        teacher_id = teacher
+        per_hour = per_hours[teachers.index(teacher)]
+        course_teach = CourseTeach(teacher_id=teacher_id, course_id=course_id, year=year, term=term, per_hours=per_hour)
         db.session.add(course_teach)
         db.session.commit()
 
-    return jsonify({'result': 'success'})
+    return render_template("add_success.html")
     
 # course 删除
-@app.route('/course/<id>', methods=['DELETE'])
+@app.route('/course/delete/po', methods=['POST'])
 def delete_course():
-    course = Course.query.get(id)
-    db.session.delete(course)
-    db.session.commit()
+    course_id = request.form.get('course_id')
+    if Course.query.get(course_id) is None:
+        return render_template("delete_fail.html", msg="课程不存在")
+    deleteCourseTeach = CourseTeach.query.filter(CourseTeach.course_id == course_id).all()
+    for course in deleteCourseTeach:
+        db.session.delete(course)
+        db.session.commit()
 
-    return jsonify({'result': 'success'})
+    return render_template("delete_success.html")
     
 # course 修改
-@app.route('/course', methods=['PUT'])
+@app.route('/course/update/po', methods=['POST'])
 def update_course():
-    course = Course.query.get(id)
+    course_id = request.form.get('course_id')
+    year = request.form.get('year')
+    term = request.form.get('term')
+    deleteCourse = CourseTeach.query.filter(CourseTeach.course_id == course_id, CourseTeach.year == year, CourseTeach.term == term).all()
+    
+    for course in deleteCourse:
+        db.session.delete(course)
+        db.session.commit()
+    # 判断course是否已经存在Course表中
+    if Course.query.get(course_id) is None:
+        return render_template("update_fail.html", msg="课程不存在")
 
-    name = request.json['name']
-    hours = request.json['hours']
-    property = request.json['property']
+    teachers = request.form.get('teachers')
+    per_hours = request.form.get('per_hours')
+    teachers = teachers.split(" ")
+    per_hours = per_hours.split(" ")
+    total_hours = Course.query.get(course_id).hours
+    per_hours = [int(i) for i in per_hours]
+    if sum(per_hours) != total_hours:
+        return render_template("update_fail.html", msg="总课时不等于教师课时之和")
+    if len(teachers) != len(per_hours):
+        return render_template("update_fail.html", msg="教师id与课时数目不匹配")
+    
+    for teacher in teachers:
+        teacher_id = teacher
+        per_hour = per_hours[teachers.index(teacher)]
+        course_teach = CourseTeach(teacher_id=teacher_id, course_id=course_id, year=year, term=term, per_hours=per_hour)
+        db.session.add(course_teach)
+        db.session.commit()
 
-    course.name = name
-    course.hours = hours
-    course.property = property
-
-    db.session.commit()
-
-    return jsonify({'result': 'success'})
+    return render_template("update_success.html")
     
 # 综合查询，根据teacher id和begin_date以及end_date查询所有信息
 @app.route('/comp_query', methods=['POST'])
@@ -571,6 +682,42 @@ def project_get_html():
 @app.route('/paper/get', methods=['GET'])
 def paper_get_html():
     return render_template('paper_get.html')
+
+@app.route('/paper/add', methods=['GET'])
+def paper_add_html():
+    return render_template('paper_add.html')
+
+@app.route('/project/add', methods=['GET'])
+def project_add_html():
+    return render_template('project_add.html')
+
+@app.route('/course/add', methods=['GET'])
+def course_add_html():
+    return render_template('course_add.html')
+
+@app.route('/paper/delete', methods=['GET'])
+def paper_delete_html():
+    return render_template('paper_delete.html')
+
+@app.route('/paper/update', methods=['GET'])
+def paper_update_html():
+    return render_template('paper_update.html')
+
+@app.route('/course/delete', methods=['GET'])
+def course_delete_html():
+    return render_template('course_delete.html')
+
+@app.route('/course/update', methods=['GET'])
+def course_update_html():
+    return render_template('course_update.html')
+
+@app.route('/project/delete', methods=['GET'])
+def project_delete_html():
+    return render_template('project_delete.html')
+
+@app.route('/project/update', methods=['GET'])
+def project_update_html():
+    return render_template('project_update.html')
 
 @app.route('/')
 def test():

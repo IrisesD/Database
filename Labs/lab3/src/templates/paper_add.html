@@ -1,0 +1,59 @@
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js" integrity="sha384-/mhDoLbDldZc3qpsJHpLogda//BVZbgYuw6kof4u2FrCedxOtgRZDTHgHUhOCVim" crossorigin="anonymous"></script>        
+<h1 class="display-6">增加记录</h1>
+<form action="/paper/add/po", method='POST'>
+            <div class="mb-3">
+                <label for="exampleEmail1" class="form-label">Paper ID</label>
+                <input type="text" class="form-control" name="paper_id">
+              </div>
+              <div class="mb-3">
+                <label for="exampleEmail1" class="form-label">Paper Name</label>
+                <input type="text" class="form-control" name="paper_name">
+              </div>
+              <div class="mb-3">
+                <label for="exampleEmail1" class="form-label">Source</label>
+                <input type="text" class="form-control" name="source">
+              </div>
+              <div class="mb-3">
+                <label for="exampleEmail1" class="form-label">Date</label>
+                <input type="text" class="form-control" name="date">
+              </div>
+              <div class="mb-3">
+                <label for="exampleEmail1" class="form-label">Type</label>
+              <select class="form-select" aria-label="Default select example" name="ptype">
+                <option selected>选择论文类型</option>
+                <option value="1">full paper</option>
+                <option value="2">short paper</option>
+                <option value="3">poster paper</option>
+                <option value="4">demo paper</option>
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label for="exampleEmail1" class="form-label">Level</label>
+              <select class="form-select" aria-label="Default select example" name="level">
+                <option selected>选择论文级别</option>
+                <option value="1">CCF-A</option>
+                <option value="2">CCF-B</option>
+                <option value="3">CCF-C</option>
+                <option value="4">中文CCF-A</option>
+                <option value="5">中文CCF-B</option>
+                <option value="6">无级别</option>
+              </select>
+            </div>
+
+              <!--对多位作者的处理-->
+              <div class="mb-3">
+                <label for="exampleEmail1" class="form-label">Teacher ID(请按排名输入老师工号,中间用空格隔开)</label>
+                <input type="text" class="form-control" name="teachers">
+              </div>
+
+              <div class="mb-3">
+                <label for="exampleEmail1" class="form-label">Corresponding Author ID(请输入通讯作者工号)</label>
+                <input type="text" class="form-control" name="corre">
+              </div>
+              <div class="col-12">
+            <button type="submit" class="btn btn-primary">Submit</button>
+            </div>
+        </form>
+        <a class="btn btn-primary" href="/paper/show" role="button">返回上一页</a>
